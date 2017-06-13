@@ -114,21 +114,23 @@ public class TransactionRunningServiceImpl implements TransactionRunningService 
         waitTask.awaitTask();
 
         try {
-            Boolean state =  (Boolean) waitTask.getBack().doing();
-            if(state){
+            int state =  (Integer) waitTask.getBack().doing();
+            if(state==1){
                 txManager.commit(status);
                 if(!signTask){
                     task.signalTask();
                 }
             }else{
                 txManager.rollback(status);
+                if(state==-1){
+                    task.setBack(new IBack() {
+                        @Override
+                        public Object doing(Object... objs) throws Throwable {
+                             throw new Throwable("事务模块网络异常.");
+                        }
+                    });
+                }
                 if(!signTask){
-//                    task.setBack(new IBack() {
-//                        @Override
-//                        public Object doing(Object... objs) throws Throwable {
-//                             throw new Throwable("分布式事务已回归.");
-//                        }
-//                    });
                     task.signalTask();
                 }
             }

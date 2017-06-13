@@ -11,8 +11,17 @@ import com.lorne.core.framework.utils.task.Task;
 public class MQTransactionServiceImpl implements MQTransactionService {
 
 
+    /**
+     *
+     * @param kid
+     * @param state
+     * 1:提交
+     * 0：回滚
+     * -1:回滚 通知事务模块存在网络异常
+     * @return
+     */
     @Override
-    public boolean notify(String kid, final boolean state) {
+    public boolean notify(String kid, final int state) {
         Task task = ConditionUtils.getInstance().getTask(kid);
         if(task!=null){
             task.setBack(new IBack() {

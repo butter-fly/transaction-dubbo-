@@ -6,7 +6,7 @@ package com.lorne.tx.mq.service;
 public interface MQTransactionService {
 
 
-    boolean notify(String kid,boolean state);
+    boolean notify(String kid,int state);
 
     boolean checkRollback(String kid);
 }
