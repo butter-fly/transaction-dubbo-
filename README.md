@@ -5,7 +5,7 @@
 ## 原理与功能
   基于对spring tx PlatformTransactionManager的本地模块事务控制从而达到全局控制事务的目的。该框架兼容任何依赖PlatformTransactionManager的DB框架。利用三阶段提交的方式来确保事务的一致性，支持本地事务和分布式事务框架共存，当方法进入的是本地事务方法，框架将不做任何分布式事务处理。当需要用到分布式事务的时候只需要在方法上添加分布式事务的注解即可。
 
-关于框架的详细设计请见[txManager](https://github.com/1991wangliang/txManager)服务。依赖第三方框架[lorne_core](https://github.com/1991wangliang/lorne_core)
+关于框架的详细设计请见[txManager](https://github.com/1991wangliang/txManager)说明
   
 
    
