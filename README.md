@@ -3,7 +3,7 @@
   该框架依赖Redis／dubbo／[txManager](https://github.com/1991wangliang/txManager)服务。依赖第三方框架[lorne_core](https://github.com/1991wangliang/lorne_core)
   
 ## 原理与功能
-  基于对spring tx PlatformTransactionManager的本地模块事务控制从而达到全局控制事务的目的。该框架兼容任何依赖PlatformTransactionManager是DB框架。框架利用三阶段提交的方式来确保事务的一致性。该框架支持本地事务和分布式事务框架共存，当方法进入的是本地事务方法，框架将不做任何分布式事务处理。当需要用到分布式事务的时候只需要在方法上添加分布式事务的注解即可。
+  基于对spring tx PlatformTransactionManager的本地模块事务控制从而达到全局控制事务的目的。该框架兼容任何依赖PlatformTransactionManager的DB框架。利用三阶段提交的方式来确保事务的一致性，支持本地事务和分布式事务框架共存，当方法进入的是本地事务方法，框架将不做任何分布式事务处理。当需要用到分布式事务的时候只需要在方法上添加分布式事务的注解即可。
 
 关于框架的详细设计请见[txManager](https://github.com/1991wangliang/txManager)服务。依赖第三方框架[lorne_core](https://github.com/1991wangliang/lorne_core)
   
@@ -24,7 +24,7 @@ maven仓库地址
         </repository>
     </repositories>
 ```
-maven jar
+maven transaction 配置
 
 ``` 
         <dependency>
@@ -38,7 +38,7 @@ maven jar
     <dubbo:application name="tx-transaction-test"   />
 
     <!--所有参与分布式事务的模块以及TxManager都必须要在同一个服务下-->
-    <dubbo:registry protocol="zookeeper" address="192.168.2.108:2181" />
+    <dubbo:registry protocol="zookeeper" address="127.0.0.1:2181" />
 
     <!--依赖TxManager服务-->
     <dubbo:reference timeout="3000" interface="com.lorne.tx.mq.service.MQTxManagerService" id="managerService" />
@@ -164,5 +164,5 @@ public class MQTestServiceImpl implements MQTestService {
 若存在业务方法A调用了业务方法B，当分布式事务注解添加在A上，那么整个A方法将被分布式事务所管理，若注解添加在B上，当调用A时将不会被启用分布式事务，尽当业务启动时的方法添加分布式事务注解时方可开启分布式事务注解。
 
 
-演示demo：[transaction_demo1]() [transaction_demo2]()   
+演示demo：[transaction_demo1](https://github.com/1991wangliang/transaction_demo1) [transaction_demo2](https://github.com/1991wangliang/transaction_demo2)   
 transaction_demo1是发起方，transaction_demo2是被调用方。
