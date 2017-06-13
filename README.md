@@ -13,6 +13,19 @@
 ##### 需要先部署redis服务。  
 ##### 部署[TxManager](https://github.com/1991wangliang/txManager)全局事务协调管理器。  
 ##### 本地项目依赖[transaction](https://github.com/1991wangliang/transaction)库.  
+
+maven仓库地址
+
+```$xslt
+    <repositories>
+        <repository>
+            <id>lorne</id>
+            <url>https://1991wangliang.github.io/repository</url>
+        </repository>
+    </repositories>
+```
+maven jar
+
 ``` 
         <dependency>
                <groupId>com.lorne.tx</groupId>
