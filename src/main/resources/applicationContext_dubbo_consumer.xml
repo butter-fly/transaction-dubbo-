@@ -13,15 +13,15 @@
 
     <dubbo:registry protocol="zookeeper" address="127.0.0.1:2181" />
 
-    <dubbo:reference interface="com.lorne.tx.mq.service.MQTxManagerService" id="managerService" />
+    <dubbo:reference timeout="3000" interface="com.lorne.tx.mq.service.MQTxManagerService" id="managerService" />
 
-    <dubbo:reference timeout="3000" interface="com.demo.service.MQTestService" id="mqTestService" />
+    <!--<dubbo:reference timeout="3000" interface="com.demo.service.MQTestService" id="mqTestService" />-->
 
     <dubbo:protocol accesslog="true" name="dubbo" port="20881" />
 
-    <dubbo:service interface="com.demo.service.MQHouService" ref="houService"  />
+    <!--<dubbo:service interface="com.demo.service.MQHouService" ref="houService"  />-->
 
-    <bean id="houService" class="com.demo.service.impl.MQHouServiceImpl"   />
+    <!--<bean id="houService" class="com.demo.service.impl.MQHouServiceImpl"   />-->
 
 
 </beans>

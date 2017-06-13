@@ -1,2 +1,155 @@
-# transaction
-业务事务切面
+# 基于Dubbo的分布式事务框架
+
+  该框架依赖Redis／dubbo／[txManager](https://github.com/1991wangliang/txManager)服务。依赖第三方框架[lorne_core](https://github.com/1991wangliang/lorne_core)
+  
+## 原理与功能
+  基于对spring tx PlatformTransactionManager的本地模块事务控制从而达到全局控制事务的目的。该框架兼容任何依赖PlatformTransactionManager是DB框架。框架利用三阶段提交的方式来确保事务的一致性。该框架支持本地事务和分布式事务框架共存，当方法进入的是本地事务方法，框架将不做任何分布式事务处理。当需要用到分布式事务的时候只需要在方法上添加分布式事务的注解即可。
+
+关于框架的详细设计请见[txManager](https://github.com/1991wangliang/txManager)服务。依赖第三方框架[lorne_core](https://github.com/1991wangliang/lorne_core)
+  
+
+   
+## 框架使用教程
+##### 需要先部署redis服务。  
+##### 部署[TxManager](https://github.com/1991wangliang/txManager)全局事务协调管理器。  
+##### 本地项目依赖[transaction](https://github.com/1991wangliang/transaction)库.  
+``` 
+        <dependency>
+               <groupId>com.lorne.tx</groupId>
+               <artifactId>transaction</artifactId>
+               <version>1.0.0</version>
+        </dependency> 
+```
+##### 配置dubbo服务
+```
+    <dubbo:application name="tx-transaction-test"   />
+
+    <!--所有参与分布式事务的模块以及TxManager都必须要在同一个服务下-->
+    <dubbo:registry protocol="zookeeper" address="192.168.2.108:2181" />
+
+    <!--依赖TxManager服务-->
+    <dubbo:reference timeout="3000" interface="com.lorne.tx.mq.service.MQTxManagerService" id="managerService" />
+
+    <dubbo:protocol accesslog="true" name="dubbo" port="20882" />
+
+    <!--所有需要分布式事务的模块也都必须对外提供服务-->
+
+    <!--1. 用户自定义的服务-->
+    <dubbo:service interface="com.demo.service.MQTestService" ref="testService"  />
+    <bean id="testService" class="com.demo.service.impl.MQTestServiceImpl"   />
+
+    <!--2. 当用户没有需要对外提供的服务时-->
+    <!--<dubbo:service interface="com.lorne.tx.mq.service.MQTransactionService" ref="transactionService"  />-->
+    <!--<bean id="transactionService" class="com.lorne.tx.mq.service.impl.MQTransactionServiceImpl"   />-->
+    
+```         
+若用户是自定义的服务，则服务必须要实现MQTransactionService接口如下：
+```$xslt
+
+public interface MQTestService extends MQTransactionService{
+
+    String test(String name);
+}
+
+```
+MQTransactionService的实现:第一种方式
+```$xslt
+
+@Service
+public class MQTestServiceImpl extends MQTransactionServiceImpl implements MQTestService {
+
+    
+    @Override
+    public String test(String name) {
+       //todo 用户业务处理 
+       return "";
+    }
+}
+
+```
+MQTransactionService的实现:第二种方式
+```$xslt
+
+@Service
+public class MQTestServiceImpl implements MQTestService {
+
+
+    @Autowired
+    private MQTransactionService transactionService;
+    
+    @Override
+    public boolean notify(String kid, boolean state) {
+        return transactionService.notify(kid, state);
+    }
+
+    @Override
+    public boolean checkRollback(String kid) {
+        return transactionService.checkRollback(kid);
+    }
+
+    @Override
+    public String test(String name) {
+       //todo 用户业务处理 
+       return "";
+    }
+}
+
+```
+
+##### 分布式事务的切面配置
+  
+```$xslt
+
+    <!--本地事务manager  -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!--本地事务切面 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!--切面 advice 定义-->
+    <tx:advice id="txAdvice">
+        <tx:attributes>
+            <tx:method name="get*" read-only="true"  />
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="load*" read-only="true"/>
+            <tx:method name="query*" read-only="true"/>
+            <tx:method name="select*" read-only="true"/>
+            <tx:method name="*" rollback-for="com.le.core.framework.exception.LEException"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!--分布式事务拦截器-->
+    <bean id="txTransactionInterceptor" class="com.lorne.tx.interceptor.TxManagerInterceptor"/>
+
+
+    <aop:config>
+        <aop:pointcut id="allManagerMethod" expression="execution(* com.**.service.impl.*Impl.*(..))"/>
+        <!--本地事务拦截-->
+        <aop:advisor  order="100" advice-ref="txAdvice" pointcut-ref="allManagerMethod"/>
+        <!--分布式事务拦截-->
+        <aop:advisor  order="10" advice-ref="txTransactionInterceptor" pointcut-ref="allManagerMethod"/>
+    </aop:config>
+
+```
+
+##### 分布式事务注解(@TxTransaction)
+```$xslt
+    @Override
+    @TxTransaction
+    public String test() {
+
+        //todo 业务处理
+
+        return "";
+
+    }
+```
+关于@TxTransaction的补充说明：
+当添加事务注解时方法将开启分布式事务处理方式。当尽当开始方法是分布式事务方法时才进入分布式事务处理逻辑。
+若存在业务方法A调用了业务方法B，当分布式事务注解添加在A上，那么整个A方法将被分布式事务所管理，若注解添加在B上，当调用A时将不会被启用分布式事务，尽当业务启动时的方法添加分布式事务注解时方可开启分布式事务注解。
+
+
+演示demo：[transaction_demo1]() [transaction_demo2]()   
+transaction_demo1是发起方，transaction_demo2是被调用方。
