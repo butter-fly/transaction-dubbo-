@@ -123,12 +123,12 @@ public class TransactionRunningServiceImpl implements TransactionRunningService 
             }else{
                 txManager.rollback(status);
                 if(!signTask){
-                    task.setBack(new IBack() {
-                        @Override
-                        public Object doing(Object... objs) throws Throwable {
-                             throw new Throwable("分布式事务已回归.");
-                        }
-                    });
+//                    task.setBack(new IBack() {
+//                        @Override
+//                        public Object doing(Object... objs) throws Throwable {
+//                             throw new Throwable("分布式事务已回归.");
+//                        }
+//                    });
                     task.signalTask();
                 }
             }
