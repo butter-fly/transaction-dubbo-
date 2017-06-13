@@ -32,7 +32,7 @@ maven transaction 配置
         <dependency>
                <groupId>com.lorne.tx</groupId>
                <artifactId>transaction</artifactId>
-               <version>1.0.0</version>
+               <version>1.0.0.RELEASE</version>
         </dependency> 
 ```
 ##### 配置dubbo服务
